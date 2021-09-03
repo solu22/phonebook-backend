@@ -13,7 +13,7 @@ morgan.token("body", (req) => {
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
-app.use(express.static("build"));
+app.use(express.static("build/index.html"));
 
 let persons = [
   {
@@ -37,6 +37,10 @@ let persons = [
     number: "39-23-6423122",
   },
 ];
+
+app.get('/', (req, res)=>{
+  res.send('<p>PhoneBook homePage</p>')
+})
 
 app.get("/info", (req, res) => {
   const getTotalEntries = persons.length;
