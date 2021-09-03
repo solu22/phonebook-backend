@@ -77,7 +77,7 @@ app.post("/api/persons", (req, res) => {
     id: Math.floor(Math.random() * 701) + 1,
   };
   persons = persons.concat(newPerson);
-  res.json(newPerson);
+  res.json(persons);
 });
 
 app.get("/api/persons/:id", (req, res) => {
