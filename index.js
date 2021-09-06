@@ -1,5 +1,7 @@
+require('dotenv').config()
 const express = require("express");
 const app = express();
+const Contact = require('./models/person')
 const morgan = require("morgan");
 app.use(express.json());
 
@@ -15,32 +17,13 @@ app.use(
 );
 app.use(express.static("build"));
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
 
-app.get('/', (req, res)=>{
-  res.send('<p>PhoneBook homePage</p>')
+app.get("/api/persons", (req, res) => {
+  Contact. find({}).then(persons => {
+    res.json(persons)
+    
 })
+});
 
 app.get("/info", (req, res) => {
   const getTotalEntries = persons.length;
@@ -51,9 +34,7 @@ app.get("/info", (req, res) => {
   );
 });
 
-app.get("/api/persons", (req, res) => {
-  res.json(persons);
-});
+
 
 app.post("/api/persons", (req, res) => {
   const { name, number } = req.body;
@@ -62,34 +43,22 @@ app.post("/api/persons", (req, res) => {
       error: "fields are missing",
     });
   }
-  const foundPerson = persons.find(
-    (person) => person.name === name || person.number === number
-  );
-  if (foundPerson) {
-    return res.status(401).json({
-      error: "person already exists in phonebook",
-    });
-  }
 
-  const newPerson = {
+  const newPerson = new Contact({
     name,
     number,
     id: Math.floor(Math.random() * 701) + 1,
-  };
-  persons = persons.concat(newPerson);
-  res.json(persons);
+  });
+  newPerson.save().then(savedPerson =>{
+    res.json(savedPerson)
+  })
 });
 
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const foundPerson = persons.find((person) => person.id === id);
-  if (foundPerson) {
-    return res.json(foundPerson.name);
-  } else {
-    return res.status(400).json({
-      error: "no such person found",
-    });
-  }
+  Contact.findById(req.params.id).then(person=>{
+    res.json(person)
+    
+  })
 });
 
 app.delete("/api/persons/:id", (req, res) => {
@@ -98,7 +67,7 @@ app.delete("/api/persons/:id", (req, res) => {
   res.status(204).end();
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT 
 app.listen(PORT, () => {
   console.log(`Server is running at ${PORT}`);
 });
