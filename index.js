@@ -1,12 +1,10 @@
 require('dotenv').config()
 const express = require("express");
+
 const app = express();
-const Contact = require('./models/person')
-const morgan = require("morgan");
 app.use(express.json());
 
-const cors = require("cors");
-app.use(cors());
+const morgan = require("morgan");
 
 morgan.token("body", (req) => {
   return JSON.stringify(req.body);
@@ -15,25 +13,13 @@ morgan.token("body", (req) => {
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
+
+const cors = require("cors");
+app.use(cors());
+
 app.use(express.static("build"));
 
-
-app.get("/api/persons", (req, res) => {
-  Contact. find({}).then(persons => {
-    res.json(persons)
-    
-})
-});
-
-app.get("/info", (req, res) => {
-  const getTotalEntries = persons.length;
-  const date = new Date();
-
-  res.send(
-    `<p>Phonebook has info for ${getTotalEntries} people <br> ${date}</p>`
-  );
-});
-
+const Contact = require('./models/person')
 
 
 app.post("/api/persons", (req, res) => {
@@ -54,18 +40,67 @@ app.post("/api/persons", (req, res) => {
   })
 });
 
-app.get("/api/persons/:id", (req, res) => {
-  Contact.findById(req.params.id).then(person=>{
-    res.json(person)
+
+
+
+app.get("/api/persons", (req, res) => {
+  Contact. find({}).then(persons => {
+    res.json(persons)
     
-  })
+})
 });
 
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((person) => person.id !== id);
-  res.status(204).end();
+app.get("/info", (req, res) => {
+  const getTotalEntries = persons.length;
+  const date = new Date();
+
+  res.send(
+    `<p>Phonebook has info for ${getTotalEntries} people <br> ${date}</p>`
+  );
 });
+
+app.get("/api/persons/:id", (req, res, next) => {
+  Contact.findById(req.params.id).then(person=>{
+    if(person){
+      res.json(person)
+    } else{
+      res.status(404).end()
+    }
+  })
+  .catch(error => next(error))
+  })
+
+
+
+app.put("api/persons/:id", (req, res, next)=>{
+  const {name, number} = req.body
+  const person = {
+    name, number
+  }
+  Contact.findByIdAndUpdate(req.params.id, person, {new: true}).then(updatePerson =>{
+    res.json(updatePerson)
+  })
+  .catch(error => next(error))
+})
+
+app.delete("/api/persons/:id", (req, res, next) => {
+  Contact.findByIdAndRemove(req.params.id)
+  .then(result =>{
+    res.status(204).end()
+  })
+  .catch(error => next(error))
+});
+
+const errorHandler = (error, req, res, next)=>{
+  console.log(error.message)
+
+  if(error.name === 'CastError'){
+    return res.status(400).send({ error: 'malformed id'})
+  }
+  next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT 
 app.listen(PORT, () => {
