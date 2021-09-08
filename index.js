@@ -19,26 +19,21 @@ app.use(cors());
 
 app.use(express.static("build"));
 
-const Contact = require('./models/person')
+const Contact = require('./models/person');
+const { response } = require('express');
 
-app.put("/api/persons/:id", (req, res, next)=>{
-  const {name, number} = req.body
-  const person = {
-    name, number
-  }
-  Contact.findByIdAndUpdate(req.params.id, person, {new: true})
-  .then(updatePerson =>{
-    res.json(updatePerson)
-  })
-  .catch(error => next(error))
-})
 
-app.post("/api/persons", (req, res) => {
+
+app.post("/api/persons", (req, res, next) => {
   const { name, number } = req.body;
   if (!name || !number) {
     return res.status(400).json({
       error: "fields are missing",
     });
+  }
+
+  if(!name.length === 3 || !number.length ===8 ){
+    return res.status(400).json("name and num length should match")
   }
 
   const newPerson = new Contact({
@@ -47,8 +42,12 @@ app.post("/api/persons", (req, res) => {
     id: Math.floor(Math.random() * 701) + 1,
   });
   newPerson.save().then(savedPerson =>{
-    res.json(savedPerson)
+    return savedPerson.toJSON()
   })
+  .then(savedFormattedPerson =>{
+    res.json(savedFormattedPerson)
+  })
+  .catch(error => next(error))
 });
 
 
@@ -82,18 +81,17 @@ app.get("/api/persons/:id", (req, res, next) => {
   })
 
 
-
-// app.put("api/persons/:id", (req, res, next)=>{
-//   const {name, number} = req.body
-//   const person = {
-//     name, number
-//   }
-//   Contact.findByIdAndUpdate(req.params.id, person, {new: true}).exec()
-//   .then(updatePerson =>{
-//     res.json(updatePerson)
-//   })
-//   .catch(error => next(error))
-// })
+  app.put("/api/persons/:id", (req, res, next)=>{
+    const {name, number} = req.body
+    const person = {
+      name, number
+    }
+    Contact.findByIdAndUpdate(req.params.id, person, {new: true})
+    .then(updatePerson =>{
+      res.json(updatePerson)
+    })
+    .catch(error => next(error))
+  })
 
 app.delete("/api/persons/:id", (req, res, next) => {
   Contact.findByIdAndRemove(req.params.id)
@@ -108,6 +106,9 @@ const errorHandler = (error, req, res, next)=>{
 
   if(error.name === 'CastError'){
     return res.status(400).send({ error: 'malformed id'})
+  }
+  else if(error.name === 'ValidationError'){
+    return response.status(400).json({ error: error.message})
   }
   next(error)
 }
