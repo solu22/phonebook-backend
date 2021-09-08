@@ -21,6 +21,17 @@ app.use(express.static("build"));
 
 const Contact = require('./models/person')
 
+app.put("/api/persons/:id", (req, res, next)=>{
+  const {name, number} = req.body
+  const person = {
+    name, number
+  }
+  Contact.findByIdAndUpdate(req.params.id, person, {new: true})
+  .then(updatePerson =>{
+    res.json(updatePerson)
+  })
+  .catch(error => next(error))
+})
 
 app.post("/api/persons", (req, res) => {
   const { name, number } = req.body;
@@ -72,16 +83,17 @@ app.get("/api/persons/:id", (req, res, next) => {
 
 
 
-app.put("api/persons/:id", (req, res, next)=>{
-  const {name, number} = req.body
-  const person = {
-    name, number
-  }
-  Contact.findByIdAndUpdate(req.params.id, person, {new: true}).then(updatePerson =>{
-    res.json(updatePerson)
-  })
-  .catch(error => next(error))
-})
+// app.put("api/persons/:id", (req, res, next)=>{
+//   const {name, number} = req.body
+//   const person = {
+//     name, number
+//   }
+//   Contact.findByIdAndUpdate(req.params.id, person, {new: true}).exec()
+//   .then(updatePerson =>{
+//     res.json(updatePerson)
+//   })
+//   .catch(error => next(error))
+// })
 
 app.delete("/api/persons/:id", (req, res, next) => {
   Contact.findByIdAndRemove(req.params.id)
